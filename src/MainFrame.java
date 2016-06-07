@@ -1,4 +1,5 @@
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -8,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -31,18 +34,17 @@ public class MainFrame extends JFrame {
 
 	public MainFrame(final Motus motus, final String word) {
 		super();
+		// this.setFocusTraversalPolicy(new MyFocusTraversalPolicy());
 		this.motus = motus;
 		this.word = word;
 		this.rows = new ArrayList<ArrayList<JTextField>>();
 		this.mainPanel = new JPanel();
-		this.remainingLetters = word.toCharArray();		
-		
+		this.remainingLetters = word.toCharArray();
+
 		setTitle("Motus");
-		setLocationRelativeTo(null);
 
 		mainPanel.setLayout(new GridLayout(0, word.length() + 1, 5, 5));
 		getContentPane().setLayout(new FlowLayout());
-		getContentPane().add(mainPanel);
 
 		JButton abortButton = new JButton("Abandonner");
 		abortButton.addActionListener(new ActionListener() {
@@ -52,10 +54,12 @@ public class MainFrame extends JFrame {
 			}
 		});
 		getContentPane().add(abortButton);
+		getContentPane().add(mainPanel);
 
 		addRow();
 
 		pack();
+		setLocationRelativeTo(null);
 	}
 
 	private void abort() {
@@ -97,12 +101,12 @@ public class MainFrame extends JFrame {
 
 	private void updateRow(ArrayList<JTextField> r) {
 		char[] temp = remainingLetters.clone();
-		
+
 		int[] lettersToRemove = new int[remainingLetters.length];
 		for (int i = 0; i < lettersToRemove.length; i++) {
 			lettersToRemove[i] = -1;
-		}		
-		
+		}
+
 		for (int i = 0; i < word.length(); i++) {
 			JTextField textField = r.get(i);
 
@@ -116,7 +120,7 @@ public class MainFrame extends JFrame {
 				textField.setBackground(Color.ORANGE);
 			}
 		}
-		
+
 		for (int i = 0; i < lettersToRemove.length; i++) {
 			if (lettersToRemove[i] != -1)
 				remainingLetters[i] = '\0';
@@ -162,6 +166,7 @@ public class MainFrame extends JFrame {
 
 		rows.add(row);
 		mainPanel.add(button);
+		row.get(0).grabFocus();
 		pack();
 	}
 
@@ -188,7 +193,32 @@ public class MainFrame extends JFrame {
 		t.setHorizontalAlignment(JTextField.CENTER);
 		t.setFont(new Font("Arial", Font.PLAIN, 20));
 		t.setDocument(new JTextFieldLimit());
-		t.addFocusListener(new FieldFocusListener(t));
+		t.addFocusListener(new FieldFocusListener(this, t));
+
+		final MainFrame frame = this;
+		t.addKeyListener(new KeyListener() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				JTextField f = (JTextField) e.getSource();
+				if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && f.getText().isEmpty()) {
+					if (getFocusTraversalPolicy().getComponentBefore(frame, t).getClass() == JTextField.class) {
+						KeyboardFocusManager.getCurrentKeyboardFocusManager().focusPreviousComponent();
+					}
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+
+			}
+
+			@Override
+			public void keyTyped(KeyEvent e) {
+
+			}
+		});
+
 		return t;
 	}
 
@@ -207,19 +237,14 @@ public class MainFrame extends JFrame {
 	private static class JTextFieldLimit extends PlainDocument {
 
 		private static final long serialVersionUID = 1L;
+		private static final int LIMIT = 1;
 
-		private int limit;
-
-		public JTextFieldLimit() {
-			super();
-			this.limit = 1;
-		}
-
+		@Override
 		public void insertString(int offset, String str, AttributeSet attr) throws BadLocationException {
 			if (str == null)
 				return;
 
-			if ((getLength() + str.length()) <= limit) {
+			if ((getLength() + str.length()) <= LIMIT) {
 				super.insertString(offset, str, attr);
 				KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent();
 			}
@@ -228,17 +253,30 @@ public class MainFrame extends JFrame {
 
 	private static class FieldFocusListener extends FocusAdapter {
 
-		private JTextField field;
+		private final JTextField field;
+		private final MainFrame mainFrame;
 
-		public FieldFocusListener(JTextField field) {
+		public FieldFocusListener(MainFrame mainFrame, JTextField field) {
 			this.field = field;
+			this.mainFrame = mainFrame;
 		}
 
 		@Override
 		public void focusGained(FocusEvent e) {
+			boolean forward = e.getOppositeComponent() == before();
 			if (!field.isEditable()) {
-				KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent();
+				if (forward)
+					KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent();
+				else
+					KeyboardFocusManager.getCurrentKeyboardFocusManager().focusPreviousComponent();
 			}
+		}
+
+		private Component before() {
+			if (mainFrame.getFocusTraversalPolicy() != null)
+				return mainFrame.getFocusTraversalPolicy().getComponentBefore(mainFrame, field);
+			else
+				return null;
 		}
 	}
 }
