@@ -17,17 +17,24 @@ public class InitFrame extends JDialog {
 	private static final int CUSTOM_WORD_INDEX = 0;
 	private static final int RANDOM_WORD_INDEX = 1;
 
-	private final JComboBox<String> comboBox;
-	private final JTextField textField;
 	private String word;
 
 	public InitFrame() {
 		super();
+		buildUi();
 
-		textField = new JTextField();
+		setTitle("Motus");
+		setLocationRelativeTo(null);
+	}
+
+	private void buildUi() {
+		// Initialize components
+		final JComboBox<String> comboBox = new JComboBox<String>();
+		final JTextField textField = new JTextField();
+		final JButton button = new JButton("Valider");
+
+		// Create textField
 		textField.setPreferredSize(new Dimension(150, textField.getHeight()));
-
-		JButton button = new JButton("Valider");
 
 		button.addActionListener(new ActionListener() {
 			@Override
@@ -41,12 +48,10 @@ public class InitFrame extends JDialog {
 				dispose();
 			}
 		});
-
-		comboBox = new JComboBox<String>();
+		
+		// Create comboBox
 		comboBox.setMaximumSize(comboBox.getPreferredSize());
-
 		comboBox.setModel(new DefaultComboBoxModel<String>(new String[] { "Mot personnalisé", "Mot aléatoire" }));
-
 		comboBox.addItemListener(new ItemListener() {
 			@Override
 			public void itemStateChanged(ItemEvent e) {
@@ -57,7 +62,8 @@ public class InitFrame extends JDialog {
 				}
 			}
 		});
-
+		
+		// Create layout
 		GroupLayout layout = new GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);
 
@@ -72,9 +78,6 @@ public class InitFrame extends JDialog {
 
 		pack();
 		setMinimumSize(getPreferredSize());
-
-			setTitle("Motus");
-		setLocationRelativeTo(null);
 	}
 
 	public String getWord() {

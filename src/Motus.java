@@ -18,8 +18,6 @@ public class Motus {
 			mainFrame.dispose();
 		}
 		
-		mainFrame = new MainFrame(this);
-		
 		InitFrame initFrame = new InitFrame();
 		initFrame.setModal(true);
 		initFrame.setVisible(true);
@@ -27,7 +25,9 @@ public class Motus {
 		secretWord = initFrame.getWord();
 		if (secretWord == null) {
 			System.exit(0);
-		}
+		}		
+		
+		mainFrame = new MainFrame(this, secretWord);
 		
 		initialazed = true;
 	}
@@ -36,7 +36,6 @@ public class Motus {
 		if (!initialazed) {
 			throw new Exception("Motus not initialized");
 		} else {
-			mainFrame.setWord(secretWord);
 			mainFrame.setVisible(true);
 		}
 	}
